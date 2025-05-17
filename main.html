@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mind Map Builder</title>
+  <link rel="stylesheet" href="body.css">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+  <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+</head>
+<body>
+  <div class="app-container">
+    <header>
+      <div class="logo-container">
+        <div class="logo">
+          <svg viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="60" cy="60" r="55" class="logo-bg"/>
+            <circle cx="60" cy="60" r="15" class="logo-node"/>
+            <line x1="60" y1="75" x2="60" y2="90" class="logo-line"/>
+            <line x1="60" y1="45" x2="60" y2="30" class="logo-line"/>
+            <line x1="75" y1="60" x2="90" y2="60" class="logo-line"/>
+            <line x1="45" y1="60" x2="30" y2="60" class="logo-line"/>
+            <circle cx="60" cy="90" r="8" class="logo-node"/>
+            <circle cx="60" cy="30" r="8" class="logo-node"/>
+            <circle cx="90" cy="60" r="8" class="logo-node"/>
+            <circle cx="30" cy="60" r="8" class="logo-node"/>
+          </svg>
+        </div>
+        <h1>Mind Map Builder</h1>
+      </div>
+      <div class="toolbar">
+        <button id="reset-btn" class="btn tooltip" data-tooltip="Reset Map">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
+            <path d="M3 3v5h5"></path>
+          </svg>
+          <span class="btn-text">Reset</span>
+        </button>
+        <button id="zoom-in-btn" class="btn tooltip" data-tooltip="Zoom In">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            <line x1="11" y1="8" x2="11" y2="14"></line>
+            <line x1="8" y1="11" x2="14" y2="11"></line>
+          </svg>
+          <span class="btn-text">Zoom In</span>
+        </button>
+        <button id="zoom-out-btn" class="btn tooltip" data-tooltip="Zoom Out">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            <line x1="8" y1="11" x2="14" y2="11"></line>
+          </svg>
+          <span class="btn-text">Zoom Out</span>
+        </button>
+        <button id="export-btn" class="btn tooltip" data-tooltip="Export">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+            <polyline points="7 10 12 15 17 10"></polyline>
+            <line x1="12" y1="15" x2="12" y2="3"></line>
+          </svg>
+          <span class="btn-text">Export</span>
+        </button>
+        <button id="theme-toggle" class="btn tooltip" data-tooltip="Toggle Theme">
+          <svg class="sun-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="5"></circle>
+            <line x1="12" y1="1" x2="12" y2="3"></line>
+            <line x1="12" y1="21" x2="12" y2="23"></line>
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+            <line x1="1" y1="12" x2="3" y2="12"></line>
+            <line x1="21" y1="12" x2="23" y2="12"></line>
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+          </svg>
+          <svg class="moon-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+          </svg>
+          <span class="btn-text">Theme</span>
+        </button>
+      </div>
+    </header>
+    
+    <main>
+      <div id="mind-map-container">
+        <svg id="connections"></svg>
+        <div id="nodes-container"></div>
+      </div>
+      
+      <div class="floating-controls">
+        <button id="float-zoom-in" class="float-btn tooltip" data-tooltip="Zoom In">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            <line x1="11" y1="8" x2="11" y2="14"></line>
+            <line x1="8" y1="11" x2="14" y2="11"></line>
+          </svg>
+        </button>
+        <button id="float-zoom-out" class="float-btn tooltip" data-tooltip="Zoom Out">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            <line x1="8" y1="11" x2="14" y2="11"></line>
+          </svg>
+        </button>
+        <button id="float-reset" class="float-btn tooltip" data-tooltip="Reset View">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
+            <path d="M3 3v5h5"></path>
+          </svg>
+        </button>
+      </div>
+    </main>
+
+    <div id="context-menu" class="context-menu">
+      <ul>
+        <li data-action="delete">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="3 6 5 6 21 6"></polyline>
+            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+            <line x1="10" y1="11" x2="10" y2="17"></line>
+            <line x1="14" y1="11" x2="14" y2="17"></line>
+          </svg>
+          Delete Node
+        </li>
+        <li data-action="rename">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 20h9"></path>
+            <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
+          </svg>
+          Rename
+        </li>
+        <li data-action="change-color">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="13.5" cy="6.5" r="2.5"></circle>
+            <circle cx="17.5" cy="10.5" r="2.5"></circle>
+            <circle cx="8.5" cy="7.5" r="2.5"></circle>
+            <circle cx="6.5" cy="12.5" r="2.5"></circle>
+            <path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"></path>
+          </svg>
+          Change Color
+        </li>
+      </ul>
+    </div>
+
+    <div id="export-modal" class="modal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2>Export Mind Map</h2>
+          <button class="close-modal">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
+        </div>
+        <div class="export-options">
+          <button id="export-image" class="btn">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+              <circle cx="8.5" cy="8.5" r="1.5"></circle>
+              <polyline points="21 15 16 10 5 21"></polyline>
+            </svg>
+            Export as Image
+          </button>
+          <button id="export-json" class="btn">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+              <polyline points="14 2 14 8 20 8"></polyline>
+              <line x1="16" y1="13" x2="8" y2="13"></line>
+              <line x1="16" y1="17" x2="8" y2="17"></line>
+              <polyline points="10 9 9 9 8 9"></polyline>
+            </svg>
+            Export as JSON
+          </button>
+        </div>
+        <div id="export-result"></div>
+        <div class="export-preview">
+          <div id="export-loading" class="loading-spinner">
+            <div class="spinner"></div>
+            <p>Generating preview...</p>
+          </div>
+          <div id="export-preview-container"></div>
+        </div>
+      </div>
+    </div>
+    
+    <div id="color-picker-modal" class="modal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2>Choose Node Color</h2>
+          <button class="close-modal">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
+        </div>
+        <div class="color-options">
+          <button class="color-option" data-color="#6366f1" style="background-color: #6366f1;"></button>
+          <button class="color-option" data-color="#ec4899" style="background-color: #ec4899;"></button>
+          <button class="color-option" data-color="#14b8a6" style="background-color: #14b8a6;"></button>
+          <button class="color-option" data-color="#f59e0b" style="background-color: #f59e0b;"></button>
+          <button class="color-option" data-color="#8b5cf6" style="background-color: #8b5cf6;"></button>
+          <button class="color-option" data-color="#ef4444" style="background-color: #ef4444;"></button>
+          <button class="color-option" data-color="#10b981" style="background-color: #10b981;"></button>
+          <button class="color-option" data-color="#3b82f6" style="background-color: #3b82f6;"></button>
+        </div>
+      </div>
+    </div>
+    
+    <div class="toast-container" id="toast-container"></div>
+  </div>
+
+  <script src="flow.js"></script>
+</body>
+</html>
