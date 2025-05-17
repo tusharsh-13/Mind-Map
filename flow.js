@@ -13,7 +13,16 @@ document.addEventListener("DOMContentLoaded", () => {
   const exportImage = document.getElementById("export-image")
   const exportJson = document.getElementById("export-json")
   const exportResult = document.getElementById("export-result")
-  const closeModal = document.querySelector(".close-modal")
+  const exportPreview = document.querySelector(".export-preview")
+  const exportPreviewContainer = document.getElementById("export-preview-container")
+  const exportLoading = document.getElementById("export-loading")
+  const colorPickerModal = document.getElementById("color-picker-modal")
+  const colorOptions = document.querySelectorAll(".color-option")
+  const closeModalButtons = document.querySelectorAll(".close-modal")
+  const floatZoomIn = document.getElementById("float-zoom-in")
+  const floatZoomOut = document.getElementById("float-zoom-out")
+  const floatReset = document.getElementById("float-reset")
+  const toastContainer = document.getElementById("toast-container")
 
   // State
   let nodes = []
@@ -29,6 +38,8 @@ document.addEventListener("DOMContentLoaded", () => {
   let longPressTimer = null
   let nextNodeId = 1
   let lastPinchDistance = null
+  let activeColorNodeId = null
+  const defaultNodeColor = "#6366f1"
 
   // Initialize
   function init() {
@@ -42,10 +53,13 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     // Load theme preference
-    const savedTheme = localStorage.getItem("mindMapTheme")
+    const savedTheme = localStorage.getItem("theme")
     if (savedTheme === "dark") {
-      document.body.setAttribute("data-theme", "dark")
+      document.body.classList.add("dark-theme")
     }
+
+    // Show welcome toast
+    showToast("Welcome to Mind Map Builder", "info")
   }
 
   // Event Listeners
@@ -54,8 +68,16 @@ document.addEventListener("DOMContentLoaded", () => {
     resetBtn.addEventListener("click", resetMindMap)
     zoomInBtn.addEventListener("click", () => changeZoom(0.1))
     zoomOutBtn.addEventListener("click", () => changeZoom(-0.1))
-    exportBtn.addEventListener("click", () => (exportModal.style.display = "flex"))
+    exportBtn.addEventListener("click", () => {
+      exportModal.style.display = "flex"
+      generateExportPreview()
+    })
     themeToggle.addEventListener("click", toggleTheme)
+
+    // Floating buttons
+    floatZoomIn.addEventListener("click", () => changeZoom(0.1))
+    floatZoomOut.addEventListener("click", () => changeZoom(-0.1))
+    floatReset.addEventListener("click", resetView)
 
     // Mind map container events for panning
     mindMapContainer.addEventListener("mousedown", startPan)
@@ -73,9 +95,24 @@ document.addEventListener("DOMContentLoaded", () => {
     contextMenu.addEventListener("click", handleContextMenuAction)
 
     // Export modal
-    closeModal.addEventListener("click", () => (exportModal.style.display = "none"))
+    closeModalButtons.forEach((button) => {
+      button.addEventListener("click", () => {
+        exportModal.style.display = "none"
+        colorPickerModal.style.display = "none"
+      })
+    })
+
     exportImage.addEventListener("click", exportAsImage)
     exportJson.addEventListener("click", exportAsJson)
+
+    // Color picker
+    colorOptions.forEach((option) => {
+      option.addEventListener("click", () => {
+        const color = option.dataset.color
+        changeNodeColor(activeColorNodeId, color)
+        colorPickerModal.style.display = "none"
+      })
+    })
 
     // Prevent context menu on right click
     document.addEventListener("contextmenu", (e) => {
@@ -92,7 +129,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // Node Management
-  function createNode(text, x, y, parentId) {
+  function createNode(text, x, y, parentId, color = defaultNodeColor) {
     const id = nextNodeId++
     const node = {
       id,
@@ -100,6 +137,7 @@ document.addEventListener("DOMContentLoaded", () => {
       x,
       y,
       parentId,
+      color,
     }
 
     nodes.push(node)
@@ -125,6 +163,12 @@ document.addEventListener("DOMContentLoaded", () => {
     nodeElement.style.left = `${node.x}px`
     nodeElement.style.top = `${node.y}px`
 
+    // Apply node color
+    if (node.color) {
+      nodeElement.style.borderColor = node.color
+      nodeElement.style.boxShadow = `0 4px 12px ${node.color}33`
+    }
+
     const nodeContent = document.createElement("div")
     nodeContent.className = "node-content"
 
@@ -134,8 +178,18 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const addButton = document.createElement("button")
     addButton.className = "add-node-btn"
-    addButton.textContent = "+"
+    addButton.innerHTML = `
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="12" y1="5" x2="12" y2="19"></line>
+        <line x1="5" y1="12" x2="19" y2="12"></line>
+      </svg>
+    `
     addButton.title = "Add child node"
+
+    // Apply button color
+    if (node.color) {
+      addButton.style.background = node.color
+    }
 
     nodeContent.appendChild(nodeText)
     nodeContent.appendChild(addButton)
@@ -215,11 +269,13 @@ document.addEventListener("DOMContentLoaded", () => {
       const newX = node.x + 180
       const newY = node.y
 
-      const newNode = createNode("New Idea", newX, newY, node.id)
+      const newNode = createNode("New Idea", newX, newY, node.id, node.color)
 
       // Animate the new node
       const newNodeElement = document.getElementById(`node-${newNode.id}`)
       newNodeElement.style.animation = "nodeAppear 0.3s ease-out"
+
+      showToast("New node created", "success")
     })
 
     // Right click for context menu
@@ -239,6 +295,28 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
+  function changeNodeColor(id, color) {
+    const node = nodes.find((n) => n.id === id)
+    if (node) {
+      node.color = color
+
+      const nodeElement = document.getElementById(`node-${id}`)
+      if (nodeElement) {
+        nodeElement.style.borderColor = color
+        nodeElement.style.boxShadow = `0 4px 12px ${color}33`
+
+        const addButton = nodeElement.querySelector(".add-node-btn")
+        if (addButton) {
+          addButton.style.background = color
+        }
+      }
+
+      saveToLocalStorage()
+      renderConnections()
+      showToast("Node color updated", "success")
+    }
+  }
+
   function deleteNode(id) {
     // Get all descendant nodes recursively
     const nodesToDelete = getDescendantNodes(id)
@@ -248,7 +326,7 @@ document.addEventListener("DOMContentLoaded", () => {
     nodes = nodes.filter((node) => !nodesToDelete.includes(node.id))
     connections = connections.filter((conn) => !nodesToDelete.includes(conn.from) && !nodesToDelete.includes(conn.to))
 
-    // Remove node elements from DOM
+    // Remove node elements
     nodesToDelete.forEach((nodeId) => {
       const nodeElement = document.getElementById(`node-${nodeId}`)
       if (nodeElement) {
@@ -258,13 +336,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
     renderConnections()
     saveToLocalStorage()
+    showToast("Node deleted", "info")
   }
 
   function getDescendantNodes(nodeId) {
     const descendants = []
-    const children = connections
-      .filter((conn) => conn.from === nodeId)
-      .map((conn) => conn.to)
+    const children = connections.filter((conn) => conn.from === nodeId).map((conn) => conn.to)
 
     children.forEach((childId) => {
       descendants.push(childId)
@@ -274,6 +351,7 @@ document.addEventListener("DOMContentLoaded", () => {
     return descendants
   }
 
+  // Drag and Drop
   function startDrag(e, nodeId) {
     isDragging = true
     activeNodeId = nodeId
@@ -331,13 +409,15 @@ document.addEventListener("DOMContentLoaded", () => {
     document.removeEventListener("touchend", endDrag)
   }
 
+  // Panning
   function startPan(e) {
-    if (e.target === mindMapContainer) {
+    if (e.target === mindMapContainer || e.target === connectionsContainer) {
       isPanning = true
       lastPanPoint = {
         x: e.clientX,
         y: e.clientY,
       }
+      mindMapContainer.style.cursor = "grabbing"
     }
   }
 
@@ -360,18 +440,17 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function endPan() {
     isPanning = false
+    mindMapContainer.style.cursor = "default"
   }
 
+  // Touch Handlers
   function handleTouchStart(e) {
     if (e.touches.length === 2) {
       // Handle pinch zoom
       const touch1 = e.touches[0]
       const touch2 = e.touches[1]
-      lastPinchDistance = Math.hypot(
-        touch2.clientX - touch1.clientX,
-        touch2.clientY - touch1.clientY
-      )
-    } else if (e.touches.length === 1 && e.target === mindMapContainer) {
+      lastPinchDistance = Math.hypot(touch2.clientX - touch1.clientX, touch2.clientY - touch1.clientY)
+    } else if (e.touches.length === 1 && (e.target === mindMapContainer || e.target === connectionsContainer)) {
       // Handle pan
       isPanning = true
       lastPanPoint = {
@@ -386,10 +465,7 @@ document.addEventListener("DOMContentLoaded", () => {
       // Handle pinch zoom
       const touch1 = e.touches[0]
       const touch2 = e.touches[1]
-      const currentDistance = Math.hypot(
-        touch2.clientX - touch1.clientX,
-        touch2.clientY - touch1.clientY
-      )
+      const currentDistance = Math.hypot(touch2.clientX - touch1.clientX, touch2.clientY - touch1.clientY)
 
       if (lastPinchDistance) {
         const delta = (currentDistance - lastPinchDistance) / 100
@@ -423,11 +499,12 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
+  // Zoom
   function changeZoom(delta) {
     const oldScale = scale
     scale = Math.max(0.1, Math.min(2, scale + delta))
 
-    // Adjust translation to zoom towards mouse position
+    // Adjust translation to zoom towards center
     const containerRect = mindMapContainer.getBoundingClientRect()
     const centerX = containerRect.width / 2
     const centerY = containerRect.height / 2
@@ -436,18 +513,29 @@ document.addEventListener("DOMContentLoaded", () => {
     translateY = centerY - (centerY - translateY) * (scale / oldScale)
 
     applyTransform()
+    saveToLocalStorage()
+  }
+
+  function resetView() {
+    scale = 1
+    translateX = 0
+    translateY = 0
+    applyTransform()
+    showToast("View reset", "info")
   }
 
   function handleWheel(e) {
     e.preventDefault()
-    const delta = -Math.sign(e.deltaY) * 0.1
+    const delta = e.deltaY > 0 ? -0.05 : 0.05
     changeZoom(delta)
   }
 
   function applyTransform() {
-    mindMapContainer.style.transform = `translate(${translateX}px, ${translateY}px) scale(${scale})`
+    nodesContainer.style.transform = `translate(${translateX}px, ${translateY}px) scale(${scale})`
+    connectionsContainer.style.transform = `translate(${translateX}px, ${translateY}px) scale(${scale})`
   }
 
+  // Connections
   function renderConnections() {
     // Clear existing connections
     connectionsContainer.innerHTML = ""
@@ -480,12 +568,19 @@ document.addEventListener("DOMContentLoaded", () => {
           const path = document.createElementNS("http://www.w3.org/2000/svg", "path")
           path.setAttribute("d", `M ${fromX} ${fromY} L ${toX} ${toY}`)
           path.setAttribute("class", "connection")
+
+          // Apply node color to connection if available
+          if (fromNode.color) {
+            path.setAttribute("stroke", fromNode.color)
+          }
+
           svg.appendChild(path)
         }
       }
     })
   }
 
+  // Context Menu
   function showContextMenu(x, y, nodeId) {
     contextMenu.style.display = "block"
     contextMenu.style.left = `${x}px`
@@ -498,16 +593,34 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function handleContextMenuAction(e) {
-    const nodeId = parseInt(contextMenu.dataset.nodeId)
-    const action = e.target.dataset.action
+    const nodeId = Number.parseInt(contextMenu.dataset.nodeId)
+    const action = e.target.closest("li")?.dataset.action
 
     if (action === "delete") {
       deleteNode(nodeId)
+    } else if (action === "rename") {
+      const nodeElement = document.getElementById(`node-${nodeId}`)
+      if (nodeElement) {
+        const textElement = nodeElement.querySelector(".node-text")
+        textElement.contentEditable = true
+        textElement.focus()
+
+        // Select all text
+        const range = document.createRange()
+        range.selectNodeContents(textElement)
+        const selection = window.getSelection()
+        selection.removeAllRanges()
+        selection.addRange(range)
+      }
+    } else if (action === "change-color") {
+      activeColorNodeId = nodeId
+      colorPickerModal.style.display = "flex"
     }
 
     hideContextMenu()
   }
 
+  // Storage
   function saveToLocalStorage() {
     const data = {
       nodes,
@@ -536,23 +649,60 @@ document.addEventListener("DOMContentLoaded", () => {
       connectionsContainer.innerHTML = ""
       createNode("Main Idea", window.innerWidth / 2 - 75, window.innerHeight / 2 - 30, null)
       saveToLocalStorage()
+      showToast("Mind map reset", "info")
     }
   }
 
+  // Theme Toggle
   function toggleTheme() {
-    const isDark = document.body.getAttribute("data-theme") === "dark"
-    document.body.setAttribute("data-theme", isDark ? "light" : "dark")
-    localStorage.setItem("mindMapTheme", isDark ? "light" : "dark")
+    document.body.classList.toggle("dark-theme")
+    const isDark = document.body.classList.contains("dark-theme")
+    localStorage.setItem("theme", isDark ? "dark" : "light")
+    showToast(`${isDark ? "Dark" : "Light"} theme activated`, "info")
+  }
+
+  // Export Functions
+  function generateExportPreview() {
+    exportPreview.style.display = "block"
+    exportLoading.style.display = "flex"
+    exportPreviewContainer.innerHTML = ""
+
+    setTimeout(() => {
+      html2canvas(mindMapContainer, { scale: 0.5 })
+        .then((canvas) => {
+          exportLoading.style.display = "none"
+          exportPreviewContainer.appendChild(canvas)
+          canvas.style.width = "100%"
+          canvas.style.height = "auto"
+        })
+        .catch((error) => {
+          exportLoading.style.display = "none"
+          showToast("Failed to generate preview", "error")
+          console.error("Export preview error:", error)
+        })
+    }, 500)
   }
 
   function exportAsImage() {
-    const container = document.querySelector(".app-container")
-    html2canvas(container).then((canvas) => {
-      const link = document.createElement("a")
-      link.download = "mind-map.png"
-      link.href = canvas.toDataURL()
-      link.click()
-    })
+    exportLoading.style.display = "flex"
+
+    html2canvas(mindMapContainer)
+      .then((canvas) => {
+        exportLoading.style.display = "none"
+
+        // Create download link
+        const link = document.createElement("a")
+        link.download = "mind-map.png"
+        link.href = canvas.toDataURL("image/png")
+        link.click()
+
+        showToast("Mind map exported as image", "success")
+      })
+      .catch((error) => {
+        exportLoading.style.display = "none"
+        showToast("Failed to export image", "error")
+        console.error("Export error:", error)
+      })
   }
 
   function exportAsJson() {
@@ -566,41 +716,108 @@ document.addEventListener("DOMContentLoaded", () => {
     link.download = "mind-map.json"
     link.href = URL.createObjectURL(blob)
     link.click()
+
+    showToast("Mind map exported as JSON", "success")
   }
 
+  function showToast(message, type = "info") {
+    const toast = document.createElement("div")
+    toast.className = `toast ${type}`
+
+    let icon = ""
+    if (type === "success") {
+      icon = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+        <polyline points="22 4 12 14.01 9 11.01"></polyline>
+      </svg>`
+    } else if (type === "error") {
+      icon = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="10"></circle>
+        <line x1="15" y1="9" x2="9" y2="15"></line>
+        <line x1="9" y1="9" x2="15" y2="15"></line>
+      </svg>`
+    } else {
+      icon = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="10"></circle>
+        <line x1="12" y1="16" x2="12" y2="12"></line>
+        <line x1="12" y1="8" x2="12.01" y2="8"></line>
+      </svg>`
+    }
+
+    toast.innerHTML = `${icon}<span>${message}</span>`
+    toastContainer.appendChild(toast)
+
+    setTimeout(() => {
+      toast.style.opacity = "0"
+      setTimeout(() => {
+        toast.remove()
+      }, 300)
+    }, 3000)
+  }
+
+  // Polyfill for html2canvas
   function html2canvas(element) {
     return new Promise((resolve) => {
       const canvas = document.createElement("canvas")
       const context = canvas.getContext("2d")
-      const rect = element.getBoundingClientRect()
 
-      canvas.width = rect.width
-      canvas.height = rect.height
+      // Set canvas size to match the element
+      canvas.width = element.offsetWidth
+      canvas.height = element.offsetHeight
 
-      const data = `
-        <svg xmlns="http://www.w3.org/2000/svg" width="${rect.width}" height="${rect.height}">
-          <foreignObject width="100%" height="100%">
-            <div xmlns="http://www.w3.org/1999/xhtml">
-              ${element.outerHTML}
-            </div>
-          </foreignObject>
-        </svg>
-      `
+      // Draw background
+      context.fillStyle = getComputedStyle(document.body).getPropertyValue("--bg-color")
+      context.fillRect(0, 0, canvas.width, canvas.height)
 
-      const img = new Image()
-      const svgBlob = new Blob([data], { type: "image/svg+xml;charset=utf-8" })
-      const url = URL.createObjectURL(svgBlob)
+      // Draw connections
+      const connections = element.querySelectorAll(".connection")
+      connections.forEach((conn) => {
+        const x1 = Number.parseFloat(conn.getAttribute("x1"))
+        const y1 = Number.parseFloat(conn.getAttribute("y1"))
+        const x2 = Number.parseFloat(conn.getAttribute("x2"))
+        const y2 = Number.parseFloat(conn.getAttribute("y2"))
 
-      img.onload = () => {
-        context.drawImage(img, 0, 0)
-        URL.revokeObjectURL(url)
-        resolve(canvas)
-      }
+        context.beginPath()
+        context.moveTo(x1, y1)
+        context.lineTo(x2, y2)
+        context.strokeStyle = getComputedStyle(document.body).getPropertyValue("--connection-color")
+        context.lineWidth = 2
+        context.stroke()
+      })
 
-      img.src = url
+      // Draw nodes
+      const nodes = element.querySelectorAll(".node")
+      nodes.forEach((node) => {
+        const rect = node.getBoundingClientRect()
+        const containerRect = element.getBoundingClientRect()
+
+        const x = rect.left - containerRect.left
+        const y = rect.top - containerRect.top
+        const width = rect.width
+        const height = rect.height
+
+        // Draw node background
+        context.fillStyle = getComputedStyle(node).backgroundColor
+        context.strokeStyle = getComputedStyle(node).borderColor
+        context.lineWidth = 2
+        context.beginPath()
+        context.roundRect(x, y, width, height, 8)
+        context.fill()
+        context.stroke()
+
+        // Draw node text
+        const textElement = node.querySelector(".node-text")
+        context.fillStyle = getComputedStyle(textElement).color
+        context.font = getComputedStyle(textElement).font
+        context.textBaseline = "top"
+        context.fillText(textElement.textContent, x + 10, y + 10)
+      })
+
+      resolve(canvas)
     })
   }
 
+  // Render the mind map
   function renderMindMap() {
     nodes.forEach((node) => {
       renderNode(node)
@@ -608,6 +825,22 @@ document.addEventListener("DOMContentLoaded", () => {
     renderConnections()
   }
 
-  // Start the application
+  // Polyfill for roundRect if not available
+  if (!CanvasRenderingContext2D.prototype.roundRect) {
+    CanvasRenderingContext2D.prototype.roundRect = function (x, y, width, height, radius) {
+      if (width < 2 * radius) radius = width / 2
+      if (height < 2 * radius) radius = height / 2
+      this.beginPath()
+      this.moveTo(x + radius, y)
+      this.arcTo(x + width, y, x + width, y + height, radius)
+      this.arcTo(x + width, y + height, x, y + height, radius)
+      this.arcTo(x, y + height, x, y, radius)
+      this.arcTo(x, y, x + width, y, radius)
+      this.closePath()
+      return this
+    }
+  }
+
+  // Initialize the app
   init()
-}) 
+})
