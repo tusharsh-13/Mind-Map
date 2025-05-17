@@ -39,7 +39,7 @@ document.addEventListener("DOMContentLoaded", () => {
   let nextNodeId = 1
   let lastPinchDistance = null
   let activeColorNodeId = null
-  const defaultNodeColor = "#6366f1"
+  const defaultNodeColor = "#f5a88c" // Peach color for light theme
 
   // Initialize
   function init() {
@@ -49,7 +49,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Create root node if no nodes exist
     if (nodes.length === 0) {
-      createNode("Main Idea", window.innerWidth / 2 - 75, window.innerHeight / 2 - 30, null)
+      createNode("Main Idea", window.innerWidth / 2 - 60, window.innerHeight / 2 - 60, null)
     }
 
     // Load theme preference
@@ -60,6 +60,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Show welcome toast
     showToast("Welcome to Mind Map Builder", "info")
+  }
+
+  function renderMindMap() {
+    // Render all nodes and connections
+    nodes.forEach((node) => renderNode(node))
+    renderConnections()
   }
 
   // Event Listeners
@@ -138,6 +144,8 @@ document.addEventListener("DOMContentLoaded", () => {
       y,
       parentId,
       color,
+      url: null, // For clickable links
+      imageUrl: null, // For node images
     }
 
     nodes.push(node)
@@ -174,7 +182,30 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const nodeText = document.createElement("div")
     nodeText.className = "node-text"
-    nodeText.textContent = node.text
+
+    // Handle clickable links
+    if (node.url) {
+      const linkElement = document.createElement("a")
+      linkElement.href = node.url
+      linkElement.target = "_blank"
+      linkElement.textContent = node.text
+      linkElement.style.color = "inherit"
+      linkElement.style.textDecoration = "underline"
+      nodeText.appendChild(linkElement)
+    } else {
+      nodeText.textContent = node.text
+    }
+
+    // Handle node images
+    if (node.imageUrl) {
+      const imageElement = document.createElement("img")
+      imageElement.src = node.imageUrl
+      imageElement.alt = node.text
+      imageElement.style.maxWidth = "100%"
+      imageElement.style.borderRadius = "0.5rem"
+      imageElement.style.marginBottom = "0.5rem"
+      nodeContent.appendChild(imageElement)
+    }
 
     const addButton = document.createElement("button")
     addButton.className = "add-node-btn"
@@ -197,13 +228,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Node event listeners
     nodeElement.addEventListener("mousedown", (e) => {
-      if (e.target !== addButton && !e.target.closest(".add-node-btn")) {
+      if (e.target !== addButton && !e.target.closest(".add-node-btn") && !e.target.closest("a")) {
         startDrag(e, node.id)
       }
     })
 
     nodeElement.addEventListener("touchstart", (e) => {
-      if (e.target !== addButton && !e.target.closest(".add-node-btn")) {
+      if (e.target !== addButton && !e.target.closest(".add-node-btn") && !e.target.closest("a")) {
         const touch = e.touches[0]
         startDrag({ clientX: touch.clientX, clientY: touch.clientY }, node.id)
 
@@ -225,7 +256,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Double click to edit
     nodeElement.addEventListener("dblclick", (e) => {
-      if (e.target.classList.contains("node-text") || e.target.closest(".node-text")) {
+      if ((e.target.classList.contains("node-text") || e.target.closest(".node-text")) && !e.target.closest("a")) {
         const textElement = nodeElement.querySelector(".node-text")
         textElement.contentEditable = true
         textElement.focus()
@@ -264,10 +295,20 @@ document.addEventListener("DOMContentLoaded", () => {
 
       // Calculate position for new node
       const parentRect = nodeElement.getBoundingClientRect()
-      const containerRect = mindMapContainer.getBoundingClientRect()
 
-      const newX = node.x + 180
-      const newY = node.y
+      // Position differently based on if it's the main node
+      let newX, newY
+      if (node.id === 1) {
+        // For main node, position based on available space
+        const angle = Math.random() * Math.PI * 2
+        const distance = 180
+        newX = node.x + Math.cos(angle) * distance
+        newY = node.y + Math.sin(angle) * distance
+      } else {
+        // For other nodes, position to the right
+        newX = node.x + 180
+        newY = node.y
+      }
 
       const newNode = createNode("New Idea", newX, newY, node.id, node.color)
 
@@ -558,15 +599,16 @@ document.addEventListener("DOMContentLoaded", () => {
         if (fromElement && toElement) {
           const fromRect = fromElement.getBoundingClientRect()
           const toRect = toElement.getBoundingClientRect()
-          const containerRect = mindMapContainer.getBoundingClientRect()
 
-          const fromX = fromRect.left + fromRect.width / 2 - containerRect.left
-          const fromY = fromRect.top + fromRect.height / 2 - containerRect.top
-          const toX = toRect.left + toRect.width / 2 - containerRect.left
-          const toY = toRect.top + toRect.height / 2 - containerRect.top
+          // Calculate center points
+          const fromCenterX = fromNode.x + fromElement.offsetWidth / 2
+          const fromCenterY = fromNode.y + fromElement.offsetHeight / 2
+          const toCenterX = toNode.x + toElement.offsetWidth / 2
+          const toCenterY = toNode.y + toElement.offsetHeight / 2
 
+          // Create SVG path
           const path = document.createElementNS("http://www.w3.org/2000/svg", "path")
-          path.setAttribute("d", `M ${fromX} ${fromY} L ${toX} ${toY}`)
+          path.setAttribute("d", `M ${fromCenterX} ${fromCenterY} L ${toCenterX} ${toCenterY}`)
           path.setAttribute("class", "connection")
 
           // Apply node color to connection if available
@@ -596,25 +638,31 @@ document.addEventListener("DOMContentLoaded", () => {
     const nodeId = Number.parseInt(contextMenu.dataset.nodeId)
     const action = e.target.closest("li")?.dataset.action
 
-    if (action === "delete") {
-      deleteNode(nodeId)
-    } else if (action === "rename") {
-      const nodeElement = document.getElementById(`node-${nodeId}`)
-      if (nodeElement) {
-        const textElement = nodeElement.querySelector(".node-text")
-        textElement.contentEditable = true
-        textElement.focus()
+    if (!action || !nodeId) return
 
-        // Select all text
-        const range = document.createRange()
-        range.selectNodeContents(textElement)
-        const selection = window.getSelection()
-        selection.removeAllRanges()
-        selection.addRange(range)
-      }
-    } else if (action === "change-color") {
-      activeColorNodeId = nodeId
-      colorPickerModal.style.display = "flex"
+    switch (action) {
+      case "delete":
+        deleteNode(nodeId)
+        break
+      case "rename":
+        const nodeElement = document.getElementById(`node-${nodeId}`)
+        if (nodeElement) {
+          const textElement = nodeElement.querySelector(".node-text")
+          textElement.contentEditable = true
+          textElement.focus()
+
+          // Select all text
+          const range = document.createRange()
+          range.selectNodeContents(textElement)
+          const selection = window.getSelection()
+          selection.removeAllRanges()
+          selection.addRange(range)
+        }
+        break
+      case "change-color":
+        activeColorNodeId = nodeId
+        colorPickerModal.style.display = "flex"
+        break
     }
 
     hideContextMenu()
@@ -626,29 +674,56 @@ document.addEventListener("DOMContentLoaded", () => {
       nodes,
       connections,
       nextNodeId,
+      viewState: {
+        scale,
+        translateX,
+        translateY,
+      },
     }
+
     localStorage.setItem("mindMapData", JSON.stringify(data))
   }
 
   function loadFromLocalStorage() {
-    const savedData = localStorage.getItem("mindMapData")
-    if (savedData) {
-      const data = JSON.parse(savedData)
-      nodes = data.nodes
-      connections = data.connections
-      nextNodeId = data.nextNodeId
+    const data = localStorage.getItem("mindMapData")
+
+    if (data) {
+      const parsedData = JSON.parse(data)
+      nodes = parsedData.nodes || []
+      connections = parsedData.connections || []
+      nextNodeId = parsedData.nextNodeId || 1
+
+      if (parsedData.viewState) {
+        scale = parsedData.viewState.scale || 1
+        translateX = parsedData.viewState.translateX || 0
+        translateY = parsedData.viewState.translateY || 0
+        applyTransform()
+      }
     }
   }
 
   function resetMindMap() {
     if (confirm("Are you sure you want to reset the mind map? This will delete all nodes.")) {
+      localStorage.removeItem("mindMapData")
+
+      // Clear DOM
+      nodesContainer.innerHTML = ""
+      while (connectionsContainer.firstChild) {
+        connectionsContainer.removeChild(connectionsContainer.firstChild)
+      }
+
+      // Reset state
       nodes = []
       connections = []
       nextNodeId = 1
-      nodesContainer.innerHTML = ""
-      connectionsContainer.innerHTML = ""
-      createNode("Main Idea", window.innerWidth / 2 - 75, window.innerHeight / 2 - 30, null)
-      saveToLocalStorage()
+      scale = 1
+      translateX = 0
+      translateY = 0
+      applyTransform()
+
+      // Create root node
+      createNode("Main Idea", window.innerWidth / 2 - 60, window.innerHeight / 2 - 60, null)
+
       showToast("Mind map reset", "info")
     }
   }
@@ -668,7 +743,7 @@ document.addEventListener("DOMContentLoaded", () => {
     exportPreviewContainer.innerHTML = ""
 
     setTimeout(() => {
-      html2canvas(mindMapContainer, { scale: 0.5 })
+      html2canvas(mindMapContainer)
         .then((canvas) => {
           exportLoading.style.display = "none"
           exportPreviewContainer.appendChild(canvas)
@@ -682,6 +757,9 @@ document.addEventListener("DOMContentLoaded", () => {
         })
     }, 500)
   }
+
+  // Import html2canvas library
+  const html2canvas = window.html2canvas
 
   function exportAsImage() {
     exportLoading.style.display = "flex"
@@ -753,92 +831,6 @@ document.addEventListener("DOMContentLoaded", () => {
         toast.remove()
       }, 300)
     }, 3000)
-  }
-
-  // Polyfill for html2canvas
-  function html2canvas(element) {
-    return new Promise((resolve) => {
-      const canvas = document.createElement("canvas")
-      const context = canvas.getContext("2d")
-
-      // Set canvas size to match the element
-      canvas.width = element.offsetWidth
-      canvas.height = element.offsetHeight
-
-      // Draw background
-      context.fillStyle = getComputedStyle(document.body).getPropertyValue("--bg-color")
-      context.fillRect(0, 0, canvas.width, canvas.height)
-
-      // Draw connections
-      const connections = element.querySelectorAll(".connection")
-      connections.forEach((conn) => {
-        const x1 = Number.parseFloat(conn.getAttribute("x1"))
-        const y1 = Number.parseFloat(conn.getAttribute("y1"))
-        const x2 = Number.parseFloat(conn.getAttribute("x2"))
-        const y2 = Number.parseFloat(conn.getAttribute("y2"))
-
-        context.beginPath()
-        context.moveTo(x1, y1)
-        context.lineTo(x2, y2)
-        context.strokeStyle = getComputedStyle(document.body).getPropertyValue("--connection-color")
-        context.lineWidth = 2
-        context.stroke()
-      })
-
-      // Draw nodes
-      const nodes = element.querySelectorAll(".node")
-      nodes.forEach((node) => {
-        const rect = node.getBoundingClientRect()
-        const containerRect = element.getBoundingClientRect()
-
-        const x = rect.left - containerRect.left
-        const y = rect.top - containerRect.top
-        const width = rect.width
-        const height = rect.height
-
-        // Draw node background
-        context.fillStyle = getComputedStyle(node).backgroundColor
-        context.strokeStyle = getComputedStyle(node).borderColor
-        context.lineWidth = 2
-        context.beginPath()
-        context.roundRect(x, y, width, height, 8)
-        context.fill()
-        context.stroke()
-
-        // Draw node text
-        const textElement = node.querySelector(".node-text")
-        context.fillStyle = getComputedStyle(textElement).color
-        context.font = getComputedStyle(textElement).font
-        context.textBaseline = "top"
-        context.fillText(textElement.textContent, x + 10, y + 10)
-      })
-
-      resolve(canvas)
-    })
-  }
-
-  // Render the mind map
-  function renderMindMap() {
-    nodes.forEach((node) => {
-      renderNode(node)
-    })
-    renderConnections()
-  }
-
-  // Polyfill for roundRect if not available
-  if (!CanvasRenderingContext2D.prototype.roundRect) {
-    CanvasRenderingContext2D.prototype.roundRect = function (x, y, width, height, radius) {
-      if (width < 2 * radius) radius = width / 2
-      if (height < 2 * radius) radius = height / 2
-      this.beginPath()
-      this.moveTo(x + radius, y)
-      this.arcTo(x + width, y, x + width, y + height, radius)
-      this.arcTo(x + width, y + height, x, y + height, radius)
-      this.arcTo(x, y + height, x, y, radius)
-      this.arcTo(x, y, x + width, y, radius)
-      this.closePath()
-      return this
-    }
   }
 
   // Initialize the app

@@ -1,22 +1,22 @@
 :root {
   /* Light Theme */
-  --bg-light: #f8fafc;
-  --text-light: #1e293b;
-  --header-light: #f1f5f9;
-  --node-bg-light: #ffffff;
-  --node-border-light: #e2e8f0;
+  --bg-light: #fff6e9;
+  --text-light: #4a3933;
+  --header-light: #ffdab9;
+  --node-bg-light: rgba(255, 245, 235, 0.8);
+  --node-border-light: #f5d0b0;
   --node-shadow-light: rgba(0, 0, 0, 0.1);
-  --connection-light: #6366f1;
-  --glass-bg-light: rgba(255, 255, 255, 0.8);
-  --accent-light: #6366f1;
-  --accent-hover-light: #4f46e5;
-  --grid-light: rgba(226, 232, 240, 0.5);
+  --connection-light: #f5a88c;
+  --glass-bg-light: rgba(255, 245, 235, 0.8);
+  --accent-light: #f5a88c;
+  --accent-hover-light: #f08c6a;
+  --grid-light: rgba(245, 208, 176, 0.5);
 
   /* Dark Theme */
   --bg-dark: #0f172a;
   --text-dark: #f8fafc;
   --header-dark: #1e293b;
-  --node-bg-dark: #1e293b;
+  --node-bg-dark: rgba(30, 41, 59, 0.8);
   --node-border-dark: #334155;
   --node-shadow-dark: rgba(0, 0, 0, 0.3);
   --connection-dark: #818cf8;
@@ -60,15 +60,15 @@
 @keyframes pulse {
   0% {
     transform: scale(1);
-    box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.4);
+    box-shadow: 0 0 0 0 rgba(245, 168, 140, 0.4);
   }
   70% {
     transform: scale(1.05);
-    box-shadow: 0 0 0 10px rgba(99, 102, 241, 0);
+    box-shadow: 0 0 0 10px rgba(245, 168, 140, 0);
   }
   100% {
     transform: scale(1);
-    box-shadow: 0 0 0 0 rgba(99, 102, 241, 0);
+    box-shadow: 0 0 0 0 rgba(245, 168, 140, 0);
   }
 }
 
@@ -117,6 +117,7 @@ body.dark-theme {
   display: flex;
   flex-direction: column;
   height: 100vh;
+  width: 100%;
 }
 
 header {
@@ -228,7 +229,7 @@ h1 {
   left: 50%;
   width: 0;
   height: 0;
-  background: rgba(99, 102, 241, 0.1);
+  background: rgba(245, 168, 140, 0.1);
   border-radius: 50%;
   transform: translate(-50%, -50%);
   transition: width 0.6s ease, height 0.6s ease;
@@ -257,7 +258,7 @@ body.dark-theme .btn {
   color: white;
   border-color: var(--accent-light);
   transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(99, 102, 241, 0.3);
+  box-shadow: 0 4px 8px rgba(245, 168, 140, 0.3);
 }
 
 .btn:hover svg {
@@ -322,15 +323,26 @@ main {
   position: relative;
   overflow: hidden;
   background: var(--bg-light);
-  background-image: radial-gradient(var(--grid-light) 1px, transparent 1px);
-  background-size: 30px 30px;
+  background-image: linear-gradient(to right, var(--grid-light) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--grid-light) 1px, transparent 1px),
+    radial-gradient(circle at 50px 50px, rgba(245, 168, 140, 0.1) 10px, transparent 10px),
+    radial-gradient(circle at 150px 150px, rgba(245, 168, 140, 0.1) 20px, transparent 20px),
+    radial-gradient(circle at 250px 250px, rgba(245, 168, 140, 0.1) 15px, transparent 15px),
+    radial-gradient(circle at 350px 100px, rgba(245, 168, 140, 0.1) 25px, transparent 25px);
+  background-size: 30px 30px, 30px 30px, 200px 200px, 300px 300px, 250px 250px, 400px 400px;
   transform-origin: center;
   transition: all 0.3s ease;
 }
 
 body.dark-theme #mind-map-container {
   background: var(--bg-dark);
-  background-image: radial-gradient(var(--grid-dark) 1px, transparent 1px);
+  background-image: linear-gradient(to right, var(--grid-dark) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--grid-dark) 1px, transparent 1px),
+    radial-gradient(circle at 50px 50px, rgba(129, 140, 248, 0.1) 10px, transparent 10px),
+    radial-gradient(circle at 150px 150px, rgba(129, 140, 248, 0.1) 20px, transparent 20px),
+    radial-gradient(circle at 250px 250px, rgba(129, 140, 248, 0.1) 15px, transparent 15px),
+    radial-gradient(circle at 350px 100px, rgba(129, 140, 248, 0.1) 25px, transparent 25px);
+  background-size: 30px 30px, 30px 30px, 200px 200px, 300px 300px, 250px 250px, 400px 400px;
 }
 
 #connections {
@@ -367,6 +379,25 @@ body.dark-theme #mind-map-container {
   user-select: none;
   z-index: 3;
   backdrop-filter: blur(5px);
+}
+
+/* Make the main idea node circular */
+.node[id="node-1"] {
+  border-radius: 50%;
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  min-width: 120px;
+  width: 120px;
+  height: 120px;
+  padding: 0.5rem;
+}
+
+.node[id="node-1"] .node-content {
+  flex-direction: column;
+  gap: 0.5rem;
 }
 
 body.dark-theme .node {
@@ -442,7 +473,7 @@ body.dark-theme .node-text[contenteditable="true"] {
   font-weight: bold;
   transition: all 0.3s;
   padding: 0;
-  box-shadow: 0 2px 5px rgba(99, 102, 241, 0.3);
+  box-shadow: 0 2px 5px rgba(245, 168, 140, 0.3);
   opacity: 0;
   transform: scale(0.8);
 }
@@ -459,7 +490,7 @@ body.dark-theme .add-node-btn {
 
 .add-node-btn:hover {
   transform: scale(1.1);
-  box-shadow: 0 3px 8px rgba(99, 102, 241, 0.4);
+  box-shadow: 0 3px 8px rgba(245, 168, 140, 0.4);
   animation: glow 1.5s infinite;
 }
 
@@ -469,6 +500,11 @@ body.dark-theme .add-node-btn:hover {
 
 .add-node-btn:active {
   transform: scale(0.95);
+}
+
+.add-node-btn svg {
+  width: 16px;
+  height: 16px;
 }
 
 .connection {
@@ -660,7 +696,7 @@ body.dark-theme #export-result {
 .spinner {
   width: 40px;
   height: 40px;
-  border: 4px solid rgba(99, 102, 241, 0.1);
+  border: 4px solid rgba(245, 168, 140, 0.1);
   border-radius: 50%;
   border-top-color: var(--accent-light);
   animation: spin 1s linear infinite;
@@ -729,7 +765,7 @@ body.dark-theme .color-option.selected {
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+  box-shadow: 0 4px 12px rgba(245, 168, 140, 0.3);
   transition: all 0.3s ease;
 }
 
@@ -746,7 +782,7 @@ body.dark-theme .float-btn {
 
 .float-btn:hover {
   transform: translateY(-2px) scale(1.05);
-  box-shadow: 0 6px 16px rgba(99, 102, 241, 0.4);
+  box-shadow: 0 6px 16px rgba(245, 168, 140, 0.4);
 }
 
 .float-btn:hover svg {
@@ -783,6 +819,7 @@ body.dark-theme .float-btn:hover {
   align-items: center;
   gap: 0.75rem;
   max-width: 300px;
+  transition: opacity 0.3s ease;
 }
 
 body.dark-theme .toast {
@@ -826,8 +863,12 @@ body.dark-theme .sun-icon {
 @media (max-width: 768px) {
   header {
     padding: 0.5rem 1rem;
-    flex-direction: column;
-    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .logo-container {
+    flex: 1;
+    min-width: 150px;
   }
 
   .toolbar {
@@ -835,6 +876,8 @@ body.dark-theme .sun-icon {
     justify-content: space-between;
     overflow-x: auto;
     padding-bottom: 0.5rem;
+    margin-top: 0.5rem;
+    flex-wrap: nowrap;
   }
 
   .btn-text {
@@ -854,6 +897,7 @@ body.dark-theme .sun-icon {
   .modal-content {
     padding: 1rem;
     width: calc(100% - 2rem);
+    max-width: none;
   }
 
   .color-options {
@@ -873,6 +917,16 @@ body.dark-theme .sun-icon {
   .float-btn svg {
     width: 1.25rem;
     height: 1.25rem;
+  }
+
+  .toast-container {
+    bottom: 1rem;
+    left: 1rem;
+    max-width: calc(100% - 2rem);
+  }
+
+  .toast {
+    max-width: 100%;
   }
 }
 
@@ -910,8 +964,20 @@ body.dark-theme .sun-icon {
     height: 20px;
   }
 
+  .add-node-btn svg {
+    width: 12px;
+    height: 12px;
+  }
+
   .color-options {
     grid-template-columns: repeat(4, 1fr);
     gap: 0.5rem;
+  }
+
+  /* Make the main idea node smaller on mobile */
+  .node[id="node-1"] {
+    width: 100px;
+    height: 100px;
+    min-width: 100px;
   }
 }

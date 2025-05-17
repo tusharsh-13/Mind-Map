@@ -7,16 +7,31 @@
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
   <style>
     :root {
-      --primary-color: #6366f1;
-      --primary-hover: #4f46e5;
-      --bg-light: #f8fafc;
-      --text-light: #1e293b;
-      --header-light: #f1f5f9;
+      /* Light Theme Colors */
+      --bg-light: #fff6e9;
+      --text-light: #4a3933;
+      --header-light: #ffdab9;
+      --node-bg-light: rgba(255, 245, 235, 0.8);
+      --node-border-light: #f5d0b0;
+      --node-shadow-light: rgba(0, 0, 0, 0.1);
+      --connection-light: #f5a88c;
+      --glass-bg-light: rgba(255, 245, 235, 0.8);
+      --accent-light: #f5a88c;
+      --accent-hover-light: #f08c6a;
+      --grid-light: rgba(245, 208, 176, 0.5);
+
+      /* Dark Theme Colors - Keep these as they are */
       --bg-dark: #0f172a;
       --text-dark: #f8fafc;
       --header-dark: #1e293b;
-      --glass-bg-light: rgba(255, 255, 255, 0.8);
+      --node-bg-dark: rgba(30, 41, 59, 0.8);
+      --node-border-dark: #334155;
+      --node-shadow-dark: rgba(0, 0, 0, 0.3);
+      --connection-dark: #818cf8;
       --glass-bg-dark: rgba(15, 23, 42, 0.8);
+      --accent-dark: #818cf8;
+      --accent-hover-dark: #6366f1;
+      --grid-dark: rgba(51, 65, 85, 0.5);
     }
 
     * {
@@ -55,7 +70,7 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      background: linear-gradient(rgba(248, 250, 252, 0.85), rgba(248, 250, 252, 0.85)),
+      background: linear-gradient(rgba(255, 246, 233, 0.85), rgba(255, 246, 233, 0.85)),
                   url('example-mindmap.svg');
       background-size: cover;
       background-position: center;
@@ -72,16 +87,19 @@
 
     .container {
       text-align: center;
-      padding: 2.5rem;
-      max-width: 800px;
+      padding: 2rem;
+      max-width: 90vw;
       z-index: 1;
-      background: var(--glass-bg-light);
+      background: rgba(255, 245, 235, 0.8);
       border-radius: 1.5rem;
       box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
       backdrop-filter: blur(10px);
       animation: fadeIn 1s ease-out;
       transition: all 0.3s ease;
-      border: 1px solid rgba(255, 255, 255, 0.2);
+      border: 1px solid rgba(245, 208, 176, 0.5);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
     }
 
     body.dark-theme .container {
@@ -91,9 +109,9 @@
     }
 
     .logo {
-      width: 120px;
-      height: 120px;
-      margin-bottom: 2rem;
+      width: 80px;
+      height: 80px;
+      margin-bottom: 1.5rem;
       animation: float 6s ease-in-out infinite;
       filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.1));
     }
@@ -104,28 +122,28 @@
     }
 
     .logo-bg {
-      fill: var(--primary-color);
+      fill: var(--accent-light);
       opacity: 0.1;
       transition: fill 0.3s ease;
     }
 
     .logo-node {
-      fill: var(--primary-color);
+      fill: var(--accent-light);
       transition: fill 0.3s ease;
     }
 
     .logo-line {
-      stroke: var(--primary-color);
+      stroke: var(--accent-light);
       stroke-width: 3;
       transition: stroke 0.3s ease;
     }
 
     h1 {
-      font-size: 3rem;
+      font-size: 2.5rem;
       color: var(--text-light);
       margin-bottom: 1rem;
       background: var(--header-light);
-      padding: 1.5rem;
+      padding: 1rem;
       border-radius: 1rem;
       display: inline-block;
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
@@ -158,10 +176,10 @@
     }
 
     .welcome-message {
-      font-size: 1.5rem;
+      font-size: 1.2rem;
       color: var(--text-light);
-      margin-bottom: 2rem;
-      min-height: 4.5rem;
+      margin-bottom: 1.5rem;
+      min-height: 3.5rem;
       transition: opacity 0.5s ease;
       text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     }
@@ -172,7 +190,7 @@
     }
 
     .start-btn {
-      background: var(--primary-color);
+      background: var(--accent-light);
       color: white;
       border: none;
       padding: 1.2rem 2.5rem;
@@ -180,16 +198,16 @@
       border-radius: 1rem;
       cursor: pointer;
       transition: all 0.3s ease;
-      box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+      box-shadow: 0 4px 12px rgba(245, 168, 140, 0.3);
       position: relative;
       overflow: hidden;
       animation: pulse 2s infinite;
     }
 
     .start-btn:hover {
-      background: var(--primary-hover);
+      background: var(--accent-hover-light);
       transform: translateY(-2px);
-      box-shadow: 0 6px 16px rgba(99, 102, 241, 0.4);
+      box-shadow: 0 6px 16px rgba(245, 168, 140, 0.4);
       animation: none;
     }
 
@@ -219,7 +237,7 @@
       position: fixed;
       top: 2rem;
       right: 2rem;
-      background: var(--primary-color);
+      background: var(--accent-light);
       color: white;
       border: none;
       padding: 0.8rem;
@@ -230,14 +248,14 @@
       justify-content: center;
       transition: all 0.3s ease;
       z-index: 1000;
-      box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+      box-shadow: 0 4px 12px rgba(245, 168, 140, 0.3);
       width: 3rem;
       height: 3rem;
     }
 
     .theme-switch:hover {
       transform: translateY(-2px) rotate(15deg);
-      box-shadow: 0 6px 16px rgba(99, 102, 241, 0.4);
+      box-shadow: 0 6px 16px rgba(245, 168, 140, 0.4);
     }
 
     .theme-switch svg {
@@ -270,19 +288,20 @@
     }
 
     .features {
+      margin-top: 2rem;
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-      gap: 1.5rem;
-      margin-top: 3rem;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+      width: 100%;
     }
 
     .feature {
-      background: rgba(255, 255, 255, 0.1);
-      padding: 1.5rem;
+      background: rgba(255, 245, 235, 0.1);
+      padding: 1rem;
       border-radius: 1rem;
       backdrop-filter: blur(5px);
       transition: all 0.3s ease;
-      border: 1px solid rgba(255, 255, 255, 0.2);
+      border: 1px solid rgba(245, 208, 176, 0.2);
       text-align: left;
     }
 
@@ -305,7 +324,7 @@
       align-items: center;
       gap: 0.5rem;
       margin-bottom: 1rem;
-      color: var(--primary-color);
+      color: var(--accent-light);
     }
 
     body.dark-theme .feature h3 {
@@ -363,6 +382,24 @@
         padding: 1rem 1.5rem;
         font-size: 1rem;
       }
+    }
+
+    /* Add custom scrollbar for container */
+    .container::-webkit-scrollbar {
+      width: 8px;
+    }
+
+    .container::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    .container::-webkit-scrollbar-thumb {
+      background: var(--accent-light);
+      border-radius: 4px;
+    }
+
+    body.dark-theme .container::-webkit-scrollbar-thumb {
+      background: var(--accent-dark);
     }
   </style>
 </head>
