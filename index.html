@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mind Map Builder</title>
+  <link rel="stylesheet" href="body.css">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+</head>
+<body>
+  <div class="app-container">
+    <header>
+      <h1>Mind Map Builder</h1>
+      <div class="toolbar">
+        <button id="reset-btn" class="btn">Reset Map</button>
+        <button id="zoom-in-btn" class="btn">Zoom In</button>
+        <button id="zoom-out-btn" class="btn">Zoom Out</button>
+        <button id="export-btn" class="btn">Export</button>
+        <button id="theme-toggle" class="btn">
+          <span class="light-icon">☀️</span>
+          <span class="dark-icon">🌙</span>
+        </button>
+      </div>
+    </header>
+    
+    <main>
+      <div id="mind-map-container">
+        <svg id="connections"></svg>
+        <div id="nodes-container"></div>
+      </div>
+    </main>
+
+    <div id="context-menu" class="context-menu">
+      <ul>
+        <li data-action="delete">Delete Node</li>
+        <li data-action="rename">Rename</li>
+        <li data-action="change-color">Change Color</li>
+      </ul>
+    </div>
+
+    <div id="export-modal" class="modal">
+      <div class="modal-content">
+        <span class="close-modal">&times;</span>
+        <h2>Export Mind Map</h2>
+        <div class="export-options">
+          <button id="export-image" class="btn">Export as Image</button>
+          <button id="export-json" class="btn">Export as JSON</button>
+        </div>
+        <div id="export-result"></div>
+      </div>
+    </div>
+  </div>
+
+  <script src="flow.js"></script>
+</body>
+</html>
